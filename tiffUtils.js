@@ -1,8 +1,10 @@
 function pack(endianness, ...bytes) {
-	return ((bytes[0] & 0xff) << 24)
-		| ((bytes[1] & 0xff) << 16)
-		| ((bytes[2] & 0xff) << 8 )
-		| ((bytes[3] & 0xff) << 0 );
+	return (
+		((bytes[0] & 0xff) << 24) |
+		((bytes[1] & 0xff) << 16) |
+		((bytes[2] & 0xff) << 8) |
+		((bytes[3] & 0xff) << 0)
+	);
 }
 
 function getFirstIfdOffset(buffer, endianness) {
@@ -14,19 +16,38 @@ function getIfdSize(buffer, endianness, ifdOffset) {
 }
 
 function getNextIfdOffset(buffer, endianness, ifdOffset) {
-	const offset = ifdOffset + 2 + (getIfdSize(buffer, endianness, ifdOffset) * 12);
-	return pack(endianness, buffer[offset], buffer[offset + 1], buffer[offset + 2], buffer[offset + 3]);
+	const offset =
+		ifdOffset + 2 + getIfdSize(buffer, endianness, ifdOffset) * 12;
+	return pack(
+		endianness,
+		buffer[offset],
+		buffer[offset + 1],
+		buffer[offset + 2],
+		buffer[offset + 3]
+	);
 }
 
 function getIfdOffsets(buffer, endianness) {
 	let ifdOffset = getFirstIfdOffset(buffer);
 	const ifdOffsets = [ifdOffset];
 
-	console.log(ifdOffsets.length, 'offset:', ifdOffset, 'size:', getIfdSize(buffer, endianness, ifdOffset));
+	console.log(
+		ifdOffsets.length,
+		'offset:',
+		ifdOffset,
+		'size:',
+		getIfdSize(buffer, endianness, ifdOffset)
+	);
 
-	while(ifdOffset = getNextIfdOffset(buffer, endianness, ifdOffset)) {
+	while ((ifdOffset = getNextIfdOffset(buffer, endianness, ifdOffset))) {
 		ifdOffsets.push(ifdOffset);
-		console.log(ifdOffsets.length, 'offset:', ifdOffset, 'size:', getIfdSize(buffer, endianness, ifdOffset));
+		console.log(
+			ifdOffsets.length,
+			'offset:',
+			ifdOffset,
+			'size:',
+			getIfdSize(buffer, endianness, ifdOffset)
+		);
 
 		if (ifdOffset >= buffer.length) {
 			break;
@@ -66,5 +87,13 @@ function getIfds(buffer, endianness, ifdOffsets) {
 }
 
 module.exports = {
-	pack, getFirstIfdOffset, getIfdSize, getNextIfdOffset, getIfdOffsets, getIfdEntryOffsets, getIfdEntries, getIfdEntry, getIfds
+	pack,
+	getFirstIfdOffset,
+	getIfdSize,
+	getNextIfdOffset,
+	getIfdOffsets,
+	getIfdEntryOffsets,
+	getIfdEntries,
+	getIfdEntry,
+	getIfds,
 };
