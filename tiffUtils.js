@@ -68,22 +68,57 @@ function getIfdEntryOffsets(buffer, endianness, ifdOffset) {
 	return offsets;
 }
 
-function getIfdEntries(buffer, endianness, ifdOffset) {
-	const ifdEntryOffsets = getIfdEntryOffsets(buffer, endianness, ifdOffset);
-
-	return ifdEntryOffsets.map(function(ifdEntryOffset) {
-		return getIfdEntry(buffer, endianness, ifdEntryOffset);
-	});
-}
-
 function getIfdEntry(buffer, endianness, ifdEntryOffset) {
 	return buffer.slice(ifdEntryOffset, ifdEntryOffset + 12);
 }
 
-function getIfds(buffer, endianness, ifdOffsets) {
-	for (let i = 0; i < ifdOffsets.length; i++) {
-		const ifdOffset = ifdOffsets[i];
-	}
+// function getIfdEntries(buffer, endianness, ifdOffset) {
+// 	const ifdEntryOffsets = getIfdEntryOffsets(buffer, endianness, ifdOffset);
+
+// 	return ifdEntryOffsets.map(function(ifdEntryOffset) {
+// 		return getIfdEntry(buffer, endianness, ifdEntryOffset);
+// 	});
+// }
+
+function parseIfdEntry(buffer, endianness, ifdEntryOffset) {
+	const tag = pack(
+		endianness,
+		0,
+		0,
+		buffer[ifdEntryOffset],
+		buffer[ifdEntryOffset + 1]
+	);
+	const type = pack(
+		endianness,
+		0,
+		0,
+		buffer[ifdEntryOffset + 2],
+		buffer[ifdEntryOffset + 3]
+	);
+	const count = pack(
+		endianness,
+		buffer[ifdEntryOffset + 4],
+		buffer[ifdEntryOffset + 5],
+		buffer[ifdEntryOffset + 6],
+		buffer[ifdEntryOffset + 7]
+	);
+	const value = pack(
+		endianness,
+		buffer[ifdEntryOffset + 8],
+		buffer[ifdEntryOffset + 9],
+		buffer[ifdEntryOffset + 10],
+		buffer[ifdEntryOffset + 11]
+	);
+
+	return { offset: ifdEntryOffset, tag, type, count, value };
+}
+
+function parseIfdEntries(buffer, endianness, ifdOffset) {
+	const ifdEntryOffsets = getIfdEntryOffsets(buffer, endianness, ifdOffset);
+
+	return ifdEntryOffsets.map(function(ifdEntryOffset) {
+		return parseIfdEntry(buffer, endianness, ifdEntryOffset);
+	});
 }
 
 module.exports = {
@@ -93,7 +128,8 @@ module.exports = {
 	getNextIfdOffset,
 	getIfdOffsets,
 	getIfdEntryOffsets,
-	getIfdEntries,
+	//getIfdEntries,
 	getIfdEntry,
-	getIfds,
+	parseIfdEntry,
+	parseIfdEntries,
 };
