@@ -251,9 +251,72 @@ const DefaultCropSize = {
 	default: (ImageWidth, ImageLength) => [ImageWidth, ImageLength],
 };
 
+/**
+ * ColorMatrix1 defines a transformation matrix that converts XYZ values to
+ * reference camera native color space values, under the first calibration
+ * illuminant. The matrix values are stored in row scan order.
+ *
+ * The ColorMatrix1 tag is required for all non-monochrome DNG files.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
 const ColorMatrix1 = {
 	tag: 50721,
 	type: SRATIONAL,
+	count: ColorPlanes => ColorPlanes * 3,
+};
+
+/**
+ * ColorMatrix2 defines a transformation matrix that converts XYZ values to
+ * reference camera native color space values, under the second calibration
+ * illuminant. The matrix values are stored in row scan order.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const ColorMatrix2 = {
+	tag: 50722,
+	type: SRATIONAL,
+	count: ColorPlanes => ColorPlanes * 3,
+};
+
+/**
+ * CameraCalibration1 defines a calibration matrix that transforms reference
+ * camera native space values to individual camera native space values under
+ * the first calibration illuminant. The matrix is stored in row scan order.
+ *
+ * This matrix is stored separately from the matrix specified by the
+ * ColorMatrix1 tag to allow raw converters to swap in replacement color
+ * matrices based on UniqueCameraModel tag, while still taking advantage of any
+ * per-individual camera calibration performed by the camera manufacturer.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const CameraCalibration1 = {
+	tag: 50723,
+	type: SRATIONAL,
+	count: ColorPlanes => ColorPlanes * ColorPlanes,
+};
+
+/**
+ * CameraCalibration2 defines a calibration matrix that transforms reference
+ * camera native space values to individual camera native space values under
+ * the second calibration illuminant. The matrix is stored in row scan order.
+ *
+ * This matrix is stored separately from the matrix specified by the
+ * ColorMatrix2 tag to allow raw converters to swap in replacement color
+ * matrices based on UniqueCameraModel tag, while still taking advantage of any
+ * per-individual camera calibration performed by the camera manufacturer.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const CameraCalibration2 = {
+	tag: 50724,
+	type: SRATIONAL,
+	count: ColorPlanes => ColorPlanes * ColorPlanes,
 };
 
 const AsShotWhiteXY = {
@@ -296,6 +359,21 @@ const CalibrationIlluminant1 = {
 };
 
 /**
+ * The illuminant used for an optional second set of color calibration tags.
+ * The legal values for this tag are the same as the legal values for the
+ * CalibrationIlluminant1 tag; however, if both are included, neither is
+ * allowed to have a value of 0 (unknown).
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const CalibrationIlluminant2 = {
+	type: 50779,
+	type: SHORT,
+	count: 2,
+};
+
+/**
  * For some cameras, the best possible image quality is not achieved by
  * preserving the total pixel count during conversion. For example, Fujifilm
  * SuperCCD images have maximum detail when their total pixel count is doubled.
@@ -327,9 +405,13 @@ module.exports = {
 	DefaultCropOrigin,
 	DefaultCropSize,
 	ColorMatrix1,
+	ColorMatrix2,
+	CameraCalibration1,
+	CameraCalibration2,
 	AsShotWhiteXY,
 	MakerNoteSafety,
 	RawImageDigest,
 	CalibrationIlluminant1,
+	CalibrationIlluminant2,
 	BestQualityScale,
 };
