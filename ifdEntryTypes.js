@@ -11,6 +11,7 @@ const SRATIONAL = 0x0a; // Two SLONG’s: the first represents the numerator of 
 const FLOAT = 0x0b; // Single precision (4-byte) IEEE format.
 const DOUBLE = 0x0c; // Double precision (8-byte) IEEE format.
 const IFD = 0x0d; // It's identical to LONG, but is only used to point to other valid IFDs.
+const UNDEFINED = 0x00;
 
 module.exports = {
 	BYTE,
@@ -26,4 +27,5 @@ module.exports = {
 	FLOAT,
 	DOUBLE,
 	IFD,
+	UNDEFINED,
 };

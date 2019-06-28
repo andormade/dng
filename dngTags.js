@@ -5,6 +5,7 @@ const {
 	RATIONAL,
 	SHORT,
 	LONG,
+	UNDEFINED,
 } = require('./ifdEntryTypes');
 
 /**
@@ -650,6 +651,114 @@ const BestQualityScale = {
 	default: 1.0,
 };
 
+/**
+ * This tag contains a 16-byte unique identifier for the raw image data in the
+ * DNG file. DNG readers can use this tag to recognize a particular raw image,
+ * even if the file's name or the metadata contained in the file has been
+ * changed.
+ *
+ * If a DNG writer creates such an identifier, it should do so using an
+ * algorithm that will ensure that it is very unlikely two different images will
+ * end up having the same identifier.
+ */
+const RawDataUniqueID = {
+	tag: 50781,
+	type: BYTE,
+	count: 16,
+};
+
+/**
+ * If the DNG file was converted from a non-DNG raw file, then this tag contains
+ * the file name of that original raw file.
+ */
+const OriginalRawFileName = {
+	tag: 50827,
+	type: [ASCII, BYTE],
+};
+
+/**
+ * If the DNG file was converted from a non-DNG raw file, then this tag contains
+ * the compressed contents of that original raw file.
+ *
+ * The contents of this tag always use the big-endian byte order.
+ *
+ * The tag contains a sequence of data blocks. Future versions of the DNG
+ * specification may define additional data blocks, so DNG readers should ignore
+ * extra bytes when parsing this tag. DNG readers should also detect the case
+ * where data blocks are missing from the end of the sequence, and should assume
+ * a default value for all the missing blocks.
+ *
+ * There are no padding or alignment bytes between data blocks.
+ * The sequence of data blocks is:
+ *
+ * 1. Compressed data fork of original raw file.
+ * 2. CompressedMacOSresourceforkoforiginalrawfile.
+ * 3. MacOSfiletype(4bytes)oforiginalrawfile.
+ * 4. MacOSfilecreator(4bytes)oforiginalrawfile.
+ * 5. Compresseddataforkofsidecar".THM"file.
+ * 6. CompressedMacOSresourceforkofsidecar".THM"file.
+ * 7. MacOSfiletype(4bytes)ofsidecar".THM"file.
+ * 8. Mac OS file creator (4 bytes) of sidecar ".THM" file.
+ *
+ * If the Mac OS file types or creator codes are unknown, zero is stored.
+ *
+ * If the Mac OS resource forks do not exist, they should be encoded as zero
+ * length forks.
+ *
+ * Each fork (data or Mac OS resource) is compressed and encoded as:
+ * ForkLength = first four bytes. This is the uncompressed length of this fork.
+ * If this value is zero, then no more data is stored for this fork.
+ *
+ * From ForkLength, compute the number of 64K compression blocks used for this
+ * data (the last block is usually smaller than 64K):
+ * ForkBlocks = Floor ((ForkLength + 65535) / 65536)
+ *
+ * The next (ForkBlocks + 1) 4-byte values are an index into the compressed
+ * data. The first ForkBlock values are offsets from the start of the data for
+ * this fork to the start of the compressed data for the corresponding
+ * compression block. The last value is an offset from the start of the data for
+ * this fork to the end of the data for this fork.
+ *
+ * Following this index is the ZIP compressed data for each 64K compression
+ * block.
+ */
+const OriginalRawFileData = {
+	tag: 50828,
+	type: UNDEFINED,
+};
+
+/**
+ * This rectangle defines the active (non-masked) pixels of the sensor. The
+ * order of the rectangle coordinates is: top, left, bottom, right.
+ */
+const ActiveArea = {
+	tag: 50829,
+	type: [SHORT, LONG],
+	count: 4,
+	default: (ImageLength, ImageWidth) => [0, 0, ImageLength, ImageWidth],
+};
+
+/**
+ * This tag contains a list of non-overlapping rectangle coordinates of fully
+ * masked pixels, which can be optionally used by DNG readers to measure the
+ * black encoding level.
+ *
+ * The order of each rectangle's coordinates is: top, left, bottom, right.
+ *
+ * If the raw image data has already had its black encoding level subtracted,
+ * then this tag should not be used, since the masked pixels are no longer
+ * useful.
+ *
+ * Note that DNG writers are still required to include estimate and store the
+ * black encoding level using the black level DNG tags. Support for the
+ * MaskedAreas tag is not required of DNG readers.
+ */
+const MaskedAreas = {
+	tag: 50830,
+	type: [SHORT, LONG],
+	count: numberOfRectangles => numberOfRectangles * 4,
+};
+
 module.exports = {
 	DNGVersion,
 	DNGBackwardVersion,
@@ -691,4 +800,9 @@ module.exports = {
 	CalibrationIlluminant1,
 	CalibrationIlluminant2,
 	BestQualityScale,
+	RawDataUniqueID,
+	OriginalRawFileName,
+	OriginalRawFileData,
+	ActiveArea,
+	MaskedAreas
 };
