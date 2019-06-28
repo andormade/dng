@@ -319,12 +319,274 @@ const CameraCalibration2 = {
 	count: ColorPlanes => ColorPlanes * ColorPlanes,
 };
 
+/**
+ * ReductionMatrix1 defines a dimensionality reduction matrix for use as the
+ * first stage in converting color camera native space values to XYZ values,
+ * under the first calibration illuminant. This tag may only be used if
+ * ColorPlanes is greater than 3. The matrix is stored in row scan order.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const ReductionMatrix1 = {
+	tag: 50725,
+	type: SRATIONAL,
+	count: ColorPlanes => ColorPlanes * 3,
+};
+
+/**
+ * ReductionMatrix2 defines a dimensionality reduction matrix for use as the
+ * first stage in converting color camera native space values to XYZ values,
+ * under the second calibration illuminant. This tag may only be used if
+ * ColorPlanes is greater than 3. The matrix is stored in row scan order.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const ReductionMatrix2 = {
+	tag: 50726,
+	type: SRATIONAL,
+	count: ColorPlanes => ColorPlanes * 3,
+};
+
+/**
+ * Normally the stored raw values are not white balanced, since any digital
+ * white balancing will reduce the dynamic range of the final image if the
+ * user decides to later adjust the white balance; however, if camera hardware
+ * is capable of white balancing the color channels before the signal is
+ * digitized, it can improve the dynamic range of the final image.
+ *
+ * AnalogBalance defines the gain, either analog (recommended) or digital (not
+ * recommended) that has been applied the stored raw values.
+ *
+ * See Chapter 6, “Mapping Camera Color Space to CIE XYZ Space” on page 79 for
+ * details of the color-processing model.
+ */
+const AnalogBalance = {
+	tag: 50727,
+	type: RATIONAL,
+	count: ColorPlanes => ColorPlanes,
+	default: ColorPlanes => new Array(ColorPlanes).fill(1.0),
+};
+
+/**
+ * AsShotNeutral specifies the selected white balance at time of capture,
+ * encoded as the coordinates of a perfectly neutral color in linear reference
+ * space values. The inclusion of this tag precludes the inclusion of the
+ * AsShotWhiteXY tag.
+ */
+const AsShotNeutral = {
+	tag: 50728,
+	type: [SHORT, RATIONAL],
+	count: ColorPlanes => ColorPlanes,
+};
+
+/**
+ * AsShotWhiteXY specifies the selected white balance at time of capture,
+ * encoded as x-y chromaticity coordinates. The inclusion of this tag precludes
+ * the inclusion of the AsShotNeutral tag.
+ */
 const AsShotWhiteXY = {
 	tag: 50729,
 	type: RATIONAL,
 	count: 2,
 };
 
+/**
+ * Camera models vary in the trade-off they make between highlight headroom and
+ * shadow noise. Some leave a significant amount of highlight headroom during a
+ * normal exposure. This allows significant negative exposure compensation to
+ * be applied during raw conversion, but also means normal exposures will
+ * contain more shadow noise. Other models leave less headroom during normal
+ * exposures. This allows for less negative exposure compensation, but results
+ * in lower shadow noise for normal exposures.
+ *
+ * Because of these differences, a raw converter needs to vary the zero point
+ * of its exposure compensation control from model to model. BaselineExposure
+ * specifies by how much (in EV units) to move the zero point. Positive values
+ * result in brighter default results, while negative values result in darker
+ * default results.
+ */
+const BaselineExposure = {
+	tag: 50730,
+	type: SRATIONAL,
+	count: 1,
+	default: 0.0,
+};
+
+/**
+ * BaselineNoise specifies the relative noise level of the camera model at a
+ * baseline ISO value of 100, compared to a reference camera model.
+ *
+ * Since noise levels tend to vary approximately with the square root of the
+ * ISO value, a raw converter can use this value, combined with the current
+ * ISO, to estimate the relative noise level of the current image.
+ */
+const BaselineNoise = {
+	tag: 50731,
+	type: RATIONAL,
+	count: 1,
+	default: 1.0,
+};
+
+/**
+ * BaselineSharpness specifies the relative amount of sharpening required for
+ * this camera model, compared to a reference camera model. Camera models vary
+ * in the strengths of their anti- aliasing filters. Cameras with weak or no
+ * filters require less sharpening than cameras with strong anti-aliasing
+ * filters.
+ */
+const BaselineSharpness = {
+	tag: 50732,
+	type: RATIONAL,
+	count: 1,
+	default: 1.0,
+};
+
+/**
+ * BayerGreenSplit only applies to CFA images using a Bayer pattern filter
+ * array. This tag specifies, in arbitrary units, how closely the values of the
+ * green pixels in the blue/green rows track the values of the green pixels in
+ * the red/green rows.
+ *
+ * A value of zero means the two kinds of green pixels track closely, while a
+ * non-zero value means they sometimes diverge. The useful range for this tag
+ * is from 0 (no divergence) to about 5000 (quite large divergence).
+ */
+const BayerGreenSplit = {
+	tag: 50733,
+	type: LONG,
+	count: 1,
+	default: 0,
+};
+
+/**
+ * Some sensors have an unpredictable non-linearity in their response as they
+ * near the upper limit of their encoding range. This non-linearity results in
+ * color shifts in the highlight areas of the resulting image unless the raw
+ * converter compensates for this effect.
+ *
+ * LinearResponseLimit specifies the fraction of the encoding range above which
+ * the response may become significantly non-linear.
+ */
+const LinearResponseLimit = {
+	tag: 50734,
+	type: RATIONAL,
+	count: 1,
+	default: 1.0,
+};
+
+/**
+ * CameraSerialNumber contains the serial number of the camera or camera body
+ * that captured the image.
+ */
+const CameraSerialNumber = {
+	tag: 50735,
+	type: ASCII,
+};
+
+/**
+ * LensInfo contains information about the lens that captured the image. If the
+ * minimum f-stops are unknown, they should be encoded as 0/0.
+ *
+ * Value 0: Minimum focal length in mm.
+ * Value 1: Maximum focal length in mm.
+ * Value 2: Minimum (maximum aperture) f-stop at minimum focal length.
+ * Value 3: Minimum (maximum aperture) f-stop at maximum focal length.
+ */
+const LensInfo = {
+	tag: 50736,
+	type: RATIONAL,
+	count: 4,
+};
+
+/**
+ * ChromaBlurRadius provides a hint to the DNG reader about how much chroma
+ * blur should be applied to the image. If this tag is omitted, the reader will
+ * use its default amount of chroma blurring.
+ *
+ * Normally this tag is only included for non-CFA images, since the amount of
+ * chroma blur required for mosaic images is highly dependent on the de-mosaic
+ * algorithm, in which case the DNG reader's default value is likely optimized
+ * for its particular de-mosaic algorithm.
+ */
+const ChromaBlurRadius = {
+	tag: 50737,
+	type: RATIONAL,
+	count: 1,
+};
+
+/**
+ * AntiAliasStrength provides a hint to the DNG reader about how strong the
+ * camera's anti-alias filter is. A value of 0.0 means no anti-alias filter
+ * (i.e., the camera is prone to aliasing artifacts with some subjects), while
+ * a value of 1.0 means a strong anti-alias filter (i.e., the camera almost
+ * never has aliasing artifacts).
+ *
+ * Note that this tag overlaps in functionality with the BaselineSharpness tag.
+ * The primary difference is the AntiAliasStrength tag is used as a hint to the
+ * de-mosaic algorithm, while the BaselineSharpness tag is used as a hint to a
+ * sharpening algorithm applied later in the processing pipeline.
+ */
+const AntiAliasStrength = {
+	tag: 50738,
+	type: RATIONAL,
+	count: 1,
+	default: 1.0,
+};
+
+/**
+ * This tag is used by Adobe Camera Raw to control the sensitivity of its
+ * "Shadows" slider.
+ */
+const ShadowScale = {
+	tag: 50739,
+	type: RATIONAL,
+	count: 1,
+	default: 1.0,
+};
+
+/**
+ * DNGPrivateData provides a way for camera manufacturers to store private data
+ * in the DNG file for use by their own raw converters, and to have that data
+ * preserved by programs that edit DNG files.
+ *
+ * The private data must follow these rules:
+ *
+ * The private data must start with a null-terminated ASCII string identifying
+ * the data. The first part of this string must be the manufacturer's name, to
+ * avoid conflicts between manufacturers.
+ *
+ * The private data must be self-contained. All offsets within the private data
+ * must be offsets relative to the start of the private data, and must not
+ * point to bytes outside the private data.
+ *
+ * The private data must be byte-order independent. If a DNG file is converted
+ * from a big- endian file to a little-endian file, the data must remain valid.
+ */
+const DNGPrivateData = {
+	tag: 50740,
+	type: BYTE,
+};
+
+/**
+ * MakerNoteSafety lets the DNG reader know whether the EXIF MakerNote tag is
+ * safe to preserve along with the rest of the EXIF data. File browsers and
+ * other image management software processing an image with a preserved
+ * MakerNote should be aware that any thumbnail image embedded in the MakerNote
+ * may be stale, and may not reflect the current state of the full size image.
+ *
+ * A MakerNote is safe to preserve if it follows these rules:
+ *
+ * The MakerNote data must be self-contained. All offsets within the MakerNote
+ * must be offsets relative to the start of the MakerNote, and must not point
+ * to bytes outside the MakerNote.
+ *
+ * The MakerNote data must be byte-order independent. Moving the data to a file
+ * with a different byte order must not invalidate it.
+ *
+ * Value: 0 (unsafe) or 1 (safe)
+ */
 const MakerNoteSafety = {
 	tag: 50741,
 	type: SHORT,
@@ -408,7 +670,22 @@ module.exports = {
 	ColorMatrix2,
 	CameraCalibration1,
 	CameraCalibration2,
+	ReductionMatrix1,
+	ReductionMatrix2,
+	AnalogBalance,
+	AsShotNeutral,
 	AsShotWhiteXY,
+	BaselineExposure,
+	BaselineNoise,
+	BaselineSharpness,
+	BayerGreenSplit,
+	LinearResponseLimit,
+	CameraSerialNumber,
+	LensInfo,
+	ChromaBlurRadius,
+	AntiAliasStrength,
+	ShadowScale,
+	DNGPrivateData,
 	MakerNoteSafety,
 	RawImageDigest,
 	CalibrationIlluminant1,
