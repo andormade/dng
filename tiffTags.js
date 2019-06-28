@@ -121,19 +121,55 @@ const Compression = {
 	default: 1,
 };
 
+/**
+ * The color space of the image data.
+ *
+ * 0 = WhiteIsZero. For bilevel and grayscale images: 0 is imaged as white.
+ * 2**BitsPerSample-1 is imaged as black. This is the normal value for
+ * Compression=2
+ *
+ * 1 = BlackIsZero. For bilevel and grayscale images: 0 is imaged as black.
+ * 2**BitsPerSample-1 is imaged as white. If this value is specified for
+ * Compression=2, the image should display and print reversed.
+ *
+ * 2 = RGB. In the RGB model, a color is described as a combination of the three
+ * primary colors of light (red, green, and blue) in particular concentrations.
+ * For each of the three components, 0 represents minimum intensity, and
+ * 2**BitsPerSample - 1 represents maximum intensity. Thus an RGB value of
+ * (0,0,0) represents black, and (255,255,255) represents white, assuming 8-bit
+ * components. For PlanarConfiguration = 1, the components are stored in the
+ * indicated order: first Red, then Green, then Blue. For
+ * PlanarConfiguration = 2, the StripOffsets for the component planes are stored
+ * in the indicated order: first the Red component plane StripOffsets, then the
+ * Green plane StripOffsets, then the Blue plane StripOffsets.
+ *
+ * 3 = Palette color. In this model, a color is described with a single
+ * component. The value of the component is used as an index into the red, green
+ * and blue curves in the ColorMap field to retrieve an RGB triplet that defines
+ * the color. When PhotometricInterpretation=3 is used, ColorMap must be present
+ * and SamplesPerPixel must be 1.
+ *
+ * 4 = Transparency Mask. This means that the image is used to define an
+ * irregularly shaped region of another image in the same TIFF file.
+ * SamplesPerPixel and BitsPerSample must be 1. PackBits compression is
+ * recommended. The 1-bits define the interior of the region; the 0-bits define
+ * the exterior of the region.
+ *
+ * A reader application can use the mask to determine which parts of the image
+ * to display. Main image pixels that correspond to 1-bits in the transparency
+ * mask are imaged to the screen or printer, but main image pixels that
+ * correspond to 0-bits in the mask are not displayed or printed.
+ *
+ * The image mask is typically at a higher resolution than the main image, if
+ * the main image is grayscale or color so that the edges can be sharp.
+ *
+ * There is no default for PhotometricInterpretation, and it is required. Do not
+ * rely on applications defaulting to what you want.
+ */
 const PhotometricInterpretation = {
 	tag: 262,
 	type: SHORT,
-};
-
-/**
- * The model name or number of the scanner, video digitizer, or other type of
- * equipment used to generate the image.
- * See also Make, Software.
- */
-const Model = {
-	tag: 272,
-	type: ASCII,
+	count: 1,
 };
 
 /**
@@ -143,6 +179,16 @@ const Model = {
  */
 const Make = {
 	tag: 271,
+	type: ASCII,
+};
+
+/**
+ * The model name or number of the scanner, video digitizer, or other type of
+ * equipment used to generate the image.
+ * See also Make, Software.
+ */
+const Model = {
+	tag: 272,
 	type: ASCII,
 };
 
@@ -425,8 +471,8 @@ module.exports = {
 	BitsPerSample,
 	Compression,
 	PhotometricInterpretation,
-	Model,
 	Make,
+	Model,
 	StripOffsets,
 	Orientation,
 	SamplesPerPixel,

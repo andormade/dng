@@ -804,5 +804,5 @@ module.exports = {
 	OriginalRawFileName,
 	OriginalRawFileData,
 	ActiveArea,
-	MaskedAreas
+	MaskedAreas,
 };
