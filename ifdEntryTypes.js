@@ -10,6 +10,7 @@ const SLONG = 0x09; // A 32-bit (4-byte) signed (twos-complement) integer.
 const SRATIONAL = 0x0a; // Two SLONG’s: the first represents the numerator of a fraction, the second the denominator.
 const FLOAT = 0x0b; // Single precision (4-byte) IEEE format.
 const DOUBLE = 0x0c; // Double precision (8-byte) IEEE format.
+const IFD = 0x0d; // It's identical to LONG, but is only used to point to other valid IFDs.
 
 module.exports = {
 	BYTE,
@@ -24,4 +25,5 @@ module.exports = {
 	SRATIONAL,
 	FLOAT,
 	DOUBLE,
+	IFD,
 };
