@@ -62,6 +62,7 @@ const BitsPerSample = {
 	tag: 258,
 	type: SHORT,
 	default: 1,
+	count: SamplesPerPixel => SamplesPerPixel,
 };
 
 /**
@@ -170,6 +171,76 @@ const PhotometricInterpretation = {
 	tag: 262,
 	type: SHORT,
 	count: 1,
+};
+
+/**
+ * The width of the dithering or halftoning matrix used to create a dithered or
+ * halftoned bilevel file.
+ * No default. See also Threshholding.
+ */
+const CellWidth = {
+	tag: 264,
+	type: SHORT,
+	count: 1,
+};
+
+/**
+ * The length of the dithering or halftoning matrix used to create a dithered or
+ * halftoned bilevel file.
+ * This field should only be present if Threshholding = 2
+ * No default. See also Threshholding
+ */
+const CellLength = {
+	tag: 265,
+	type: SHORT,
+	count: 1,
+	default: 1,
+};
+
+/**
+ * The logical order of bits within a byte.
+ *
+ * 1 = pixels are arranged within a byte such that pixels with lower column
+ * values are stored in the higher-order bits of the byte.
+ *
+ * 1-bit uncompressed data example: Pixel 0 of a row is stored in the high-order
+ * bit of byte 0, pixel 1 is stored in the next-highest bit, ..., pixel 7 is
+ * stored in the loworder bit of byte 0, pixel 8 is stored in the high-order bit
+ * of byte 1, and so on.
+ *
+ * CCITT 1-bit compressed data example: The high-order bit of the first
+ * compression code is stored in the high-order bit of byte 0, the next-highest
+ * bit of the first compression code is stored in the next-highest bit of byte
+ * 0, and so on.
+ *
+ * 2 = pixels are arranged within a byte such that pixels with lower column
+ * values are stored in the lower-order bits of the byte.
+ *
+ * We recommend that FillOrder=2 be used only in special-purpose applications.
+ * It is easy and inexpensive for writers to reverse bit order by using a
+ * 256-byte lookup table. FillOrder = 2 should be used only when
+ * BitsPerSample = 1 and the data is either uncompressed or compressed using
+ * CCITT 1D or 2D compression, to avoid potentially ambigous situations.
+ *
+ * Support for FillOrder=2 is not required in a Baseline TIFF compliant reader
+ *
+ * Default is FillOrder = 1.
+ */
+const FillOrder = {
+	tag: 266,
+	type: SHORT,
+	count: 1,
+};
+
+/**
+ * A string that describes the subject of the image.
+ *
+ * For example, a user may wish to attach a comment such as “1988 company
+ * picnic” to an image.
+ */
+const ImageDescription = {
+	tag: 270,
+	type: ASCII,
 };
 
 /**
@@ -323,6 +394,34 @@ const StripByteCounts = {
 };
 
 /**
+ * The minimum component value used.
+ *
+ * Default is 0. See also MaxSampleValue.
+ */
+const MinSampleValue = {
+	tag: 280,
+	type: SHORT,
+	count: SamplesPerPixel => SamplesPerPixel,
+	default: 0,
+};
+
+/**
+ * The maximum component value used.
+ *
+ * This field is not to be used to affect the visual appearance of an image when
+ * it is displayed or printed. Nor should this field affect the interpretation
+ * of any other field; it is used only for statistical purposes.
+ *
+ * Default is 2**(BitsPerSample) - 1.
+ */
+const MaxSampleValue = {
+	tag: 281,
+	type: SHORT,
+	count: SamplesPerPixel => SamplesPerPixel,
+	default: BitsPerSample => Math.pow(2, BitsPerSample) - 1,
+};
+
+/**
  * The number of pixels per ResolutionUnit in the ImageWidth direction.
  *
  * It is not mandatory that the image be actually displayed or printed at the
@@ -390,6 +489,76 @@ const PlanarConfiguration = {
 };
 
 /**
+ * For each string of contiguous unused bytes in a TIFF file, the byte offset of
+ * the string.
+ * Not recommended for general interchange.
+ * See also FreeByteCounts.
+ */
+const FreeOffsets = {
+	tag: 288,
+	type: LONG,
+};
+
+/**
+ * For each string of contiguous unused bytes in a TIFF file, the number of
+ * bytes in the string.
+ * Not recommended for general interchange.
+ * See also FreeOffsets.
+ */
+const FreeByteCounts = {
+	tag: 289,
+	type: LONG,
+};
+
+/**
+ * The precision of the information contained in the GrayResponseCurve.
+ *
+ * Because optical density is specified in terms of fractional numbers, this
+ * field is necessary to interpret the stored integer information. For example,
+ * if GrayScaleResponseUnits is set to 4 (ten-thousandths of a unit), and a
+ * GrayScaleResponseCurve number for gray level 4 is 3455, then the resulting
+ * actual value is 0.3455.
+ *
+ * Optical densitometers typically measure densities within the range of 0.0 to
+ * 2.0.
+ *
+ * 1 = Number represents tenths of a unit.
+ * 2 = Number represents hundredths of a unit.
+ * 3 = Number represents thousandths of a unit.
+ * 4 = Number represents ten-thousandths of a unit.
+ * 5 = Number represents hundred-thousandths of a unit.
+ *
+ * Modifies GrayResponseCurve.
+ * See also GrayResponseCurv.
+ *
+ * For historical reasons, the default is 2. However, for greater accuracy, 3 is
+ * recommended.
+ */
+const GrayResponseUnit = {
+	tag: 290,
+	type: SHORT,
+	count: 1,
+	default: 2,
+};
+
+/**
+ * For grayscale data, the optical density of each possible pixel value.
+ *
+ * The 0th value of GrayResponseCurve corresponds to the optical density of a
+ * pixel having a value of 0, and so on.
+ *
+ * This field may provide useful information for sophisticated applications, but
+ * it is currently ignored by most TIFF readers.
+ *
+ * See also GrayResponseUnit, PhotometricInterpretation.
+ */
+const GrayResponseCurve = {
+	tag: 291,
+	type: SHORT,
+	count: BitsPerSample => Math.pow(2, BitsPerSample),
+};
+
+/**
  * The unit of measurement for XResolution and YResolution.
  *
  * To be used with XResolution and YResolution.
@@ -425,6 +594,36 @@ const Software = {
 };
 
 /**
+ * Date and time of image creation.
+ *
+ * The format is: “YYYY:MM:DD HH:MM:SS”, with hours like those on a 24-hour
+ * clock, and one space character between the date and the time. The length of
+ * the string, including the terminating NUL, is 20 bytes.
+ */
+const DateTime = {
+	tag: 306,
+	type: ASCII,
+	count: 20,
+};
+
+/**
+ * Person who created the image.
+ */
+const Artist = {
+	tag: 315,
+	type: ASCII,
+};
+
+/**
+ * The computer and/or operating system in use at the time of image creation.
+ * See also Make, Model, Software.
+ */
+const HostComputer = {
+	tag: 316,
+	type: ASCII,
+};
+
+/**
  * This field defines a Red-Green-Blue color map (often called a lookup table)
  * for palette color images. In a palette-color image, a pixel value is used to
  * index into an RGB-lookup table.
@@ -455,6 +654,58 @@ const SubIFDs = {
 };
 
 /**
+ * Description of extra components.
+ *
+ * Specifies that each pixel has m extra components whose interpretation is
+ * defined by one of the values listed below. When this field is used, the
+ * SamplesPerPixel field has a value greater than the PhotometricInterpretation
+ * field suggests.
+ *
+ * For example, full-color RGB data normally has SamplesPerPixel=3. If
+ * SamplesPerPixel is greater than 3, then the ExtraSamples field describes the
+ * meaning of the extra samples. If SamplesPerPixel is, say, 5 then ExtraSamples
+ * will contain 2 values, one for each extra sample.
+ *
+ * ExtraSamples is typically used to include non-color information, such as
+ * opacity, in an image. The possible values for each item in the field's value
+ * are:
+ *
+ * 0 = Unspecified data
+ * 1 = Associated alpha data (with pre-multiplied color)
+ * 2 = Unassociated alpha data
+ *
+ * Associated alpha data is opacity information; it is fully described in
+ * Section 21. Unassociated alpha data is transparency information that
+ * logically exists independent of an image; it is commonly called a soft matte.
+ * Note that including both unassociated and associated alpha is undefined
+ * because associated alpha specifies that color components are pre-multiplied
+ * by the alpha component, while unassociated alpha specifies the opposite.
+ *
+ * By convention, extra components that are present must be stored as the “last
+ * components” in each pixel. For example, if SamplesPerPixel is 4 and there is
+ * 1 extra component, then it is located in the last component location
+ * (SamplesPerPixel-1) in each pixel.
+ *
+ * Components designated as “extra” are just like other components in a pixel.
+ * In particular, the size of such components is defined by the value of
+ * the BitsPerSample field.
+ *
+ * With the introduction of this field, TIFF readers must not assume a
+ * particular SamplesPerPixel value based on the value of the
+ * PhotometricInterpretation field. For example, if the file is an RGB file,
+ * SamplesPerPixel may be greater than 3.
+ *
+ * The default is no extra samples. This field must be present if there are
+ * extra samples.
+ *
+ * See also SamplesPerPixel, AssociatedAlpha.
+ */
+const ExtraSamples = {
+	tag: 338,
+	type: SHORT,
+};
+
+/**
  * XMP is an extensible way to include metadata such as meaningful descriptions
  * and titles, searchable keywords, and up-to-date author and copyright
  * information.
@@ -464,6 +715,17 @@ const XMP = {
 	type: BYTE,
 };
 
+/**
+ * Copyright notice of the person or organization that claims the copyright to
+ * the image. The complete copyright statement should be listed in this field
+ * including any dates and statements of claims. For example, “Copyright, John
+ * Smith, 19xx. All rights reserved.”
+ */
+const Copyright = {
+	tag: 33432,
+	type: ASCII,
+};
+
 module.exports = {
 	NewSubfileType,
 	ImageWidth,
@@ -471,6 +733,10 @@ module.exports = {
 	BitsPerSample,
 	Compression,
 	PhotometricInterpretation,
+	CellWidth,
+	CellLength,
+	FillOrder,
+	ImageDescription,
 	Make,
 	Model,
 	StripOffsets,
@@ -478,12 +744,23 @@ module.exports = {
 	SamplesPerPixel,
 	RowsPerStrip,
 	StripByteCounts,
+	MinSampleValue,
+	MaxSampleValue,
 	XResolution,
 	YResolution,
 	PlanarConfiguration,
+	FreeOffsets,
+	FreeByteCounts,
+	GrayResponseUnit,
+	GrayResponseCurve,
 	ResolutionUnit,
 	Software,
+	DateTime,
+	Artist,
+	HostComputer,
 	ColorMap,
 	SubIFDs,
+	ExtraSamples,
 	XMP,
+	Copyright,
 };
