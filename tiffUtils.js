@@ -1,12 +1,7 @@
 const BIG_ENDIAN = Symbol('BIG_ENDIAN');
 const LITTLE_ENDIAN = Symbol('LITTLE_ENDIAN');
-const {
-	getIfdSize,
-	getNextIfdOffset,
-	getIfdEntryOffsets,
-} = require('./ifdUtils');
+const { getIfdSize, getNextIfdOffset } = require('./ifdUtils');
 const { readLong } = require('./typeUtils');
-const { getIfdEntry } = require('./ifdEntryUtils');
 
 function getEndianness(buffer) {
 	if (buffer[0] === 0x4d && buffer[1] === 0x4d) {
@@ -64,9 +59,5 @@ function getSubIfdOffsets(buffer, endianness, ifdOffset) {}
 
 module.exports = {
 	getFirstIfdOffset,
-	getIfdSize,
-	getNextIfdOffset,
 	getIfdOffsets,
-	getIfdEntryOffsets,
-	getIfdEntry,
 };

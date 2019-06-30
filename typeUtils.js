@@ -1,3 +1,5 @@
+const types = require('./types');
+
 function pack(endianness, ...bytes) {
 	return (
 		((bytes[0] & 0xff) << 24) |
@@ -71,6 +73,14 @@ function readLongBuffer(buffer, endianness, offset, count) {
 	return readWordString(buffer, endianness, offset, 4, count, readLong);
 }
 
+function getTypeNameByNumber(number) {
+	const [type = number] = Object.keys(types).filter(function(type) {
+		return types[type] === number;
+	});
+
+	return type;
+}
+
 module.exports = {
 	readAscii,
 	readShort,
@@ -80,4 +90,5 @@ module.exports = {
 	readShortBuffer,
 	readLongBuffer,
 	readByteBuffer,
+	getTypeNameByNumber,
 };

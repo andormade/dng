@@ -1,7 +1,6 @@
 const { getTiffTagNameByNumber } = require('./tagUtils');
 const { getIfdEntryOffsets } = require('./ifdUtils');
-const types = require('./types');
-const { ASCII, SHORT, BYTE, LONG } = types;
+const { ASCII, SHORT, BYTE, LONG } = require('./types');
 const {
 	readAscii,
 	readShort,
@@ -11,15 +10,8 @@ const {
 	readShortBuffer,
 	readLongBuffer,
 	readByteBuffer,
+	getTypeNameByNumber,
 } = require('./typeUtils');
-
-function getEntryTypeNameByNumber(number) {
-	const [type = number] = Object.keys(types).filter(function(type) {
-		return types[type] === number;
-	});
-
-	return type;
-}
 
 function getType(buffer, endianness, ifdEntryOffset) {
 	return readShort(buffer, endianness, ifdEntryOffset + 2);
@@ -104,7 +96,7 @@ function getHumanReadableIfdEntry(buffer, endianness, ifdEntryOffset) {
 	return {
 		offset: ifdEntryOffset,
 		tag: getTiffTagNameByNumber(tag),
-		type: getEntryTypeNameByNumber(type),
+		type: getTypeNameByNumber(type),
 		value,
 	};
 }
