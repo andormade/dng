@@ -1,4 +1,4 @@
-const { BYTE, LONG, SHORT, ASCII, RATIONAL, IFD } = require('./ifdEntryTypes');
+const { BYTE, LONG, SHORT, ASCII, RATIONAL, IFD } = require('./types');
 
 /**
  * Replaces the old SubfileType field, due to limitations in the definition of
@@ -339,7 +339,7 @@ const Orientation = {
  */
 const SamplesPerPixel = {
 	tag: 277,
-	type: [SHORT],
+	type: SHORT,
 	count: 1,
 	default: 1,
 };
@@ -706,6 +706,30 @@ const ExtraSamples = {
 };
 
 /**
+ * Indexed images are images where the “pixels” do not represent color values,
+ * but rather an index (usually 8-bit) into a separate color table, the
+ * ColorMap. ColorMap is required for an Indexed image.
+ *
+ * The PhotometricInterpretation type of PaletteColor may still be used, and is
+ * equivalent to specifying an RGB image with the Indexed flag set, a suitable
+ * ColorMap, and SamplesPerPixel = 1.
+ *
+ * Do not use both the Indexed flag and PhotometricInterpretation = PaletteColor
+ * for the same image.
+ *
+ * 1 = Indexed.
+ * 0 = not.
+ *
+ * Default is 0 (not indexed)
+ */
+const Indexed = {
+	tag: 346,
+	type: SHORT,
+	count: 1,
+	default: 0,
+};
+
+/**
  * XMP is an extensible way to include metadata such as meaningful descriptions
  * and titles, searchable keywords, and up-to-date author and copyright
  * information.
@@ -761,6 +785,7 @@ module.exports = {
 	ColorMap,
 	SubIFDs,
 	ExtraSamples,
+	Indexed,
 	XMP,
 	Copyright,
 };

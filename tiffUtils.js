@@ -1,30 +1,33 @@
-function pack(endianness, ...bytes) {
-	return (
-		((bytes[0] & 0xff) << 24) |
-		((bytes[1] & 0xff) << 16) |
-		((bytes[2] & 0xff) << 8) |
-		((bytes[3] & 0xff) << 0)
-	);
+const BIG_ENDIAN = Symbol('BIG_ENDIAN');
+const LITTLE_ENDIAN = Symbol('LITTLE_ENDIAN');
+const {
+	getIfdSize,
+	getNextIfdOffset,
+	getIfdEntryOffsets,
+} = require('./ifdUtils');
+const { readLong } = require('./typeUtils');
+const { getIfdEntry } = require('./ifdEntryUtils');
+
+function getEndianness(buffer) {
+	if (buffer[0] === 0x4d && buffer[1] === 0x4d) {
+		return BIG_ENDIAN;
+	} else if (buffer[0] === 0x00 && buffer[0] === 0x00) {
+		return LITTLE_ENDIAN;
+	} else {
+		throw 'Not valid TIFF file';
+	}
+}
+
+function isValidTiffFile(buffer) {
+	if (getEndianness(buffer) === BIG_ENDIAN) {
+		return buffer[3] === 0x2a;
+	} else {
+		return buffer[3] === 0x2a;
+	}
 }
 
 function getFirstIfdOffset(buffer, endianness) {
-	return pack(endianness, buffer[4], buffer[5], buffer[6], buffer[7]);
-}
-
-function getIfdSize(buffer, endianness, ifdOffset) {
-	return pack(endianness, 0, 0, buffer[ifdOffset + 0], buffer[ifdOffset + 1]);
-}
-
-function getNextIfdOffset(buffer, endianness, ifdOffset) {
-	const offset =
-		ifdOffset + 2 + getIfdSize(buffer, endianness, ifdOffset) * 12;
-	return pack(
-		endianness,
-		buffer[offset],
-		buffer[offset + 1],
-		buffer[offset + 2],
-		buffer[offset + 3]
-	);
+	return readLong(buffer, endianness, 4);
 }
 
 function getIfdOffsets(buffer, endianness) {
@@ -57,79 +60,13 @@ function getIfdOffsets(buffer, endianness) {
 	return ifdOffsets;
 }
 
-function getIfdEntryOffsets(buffer, endianness, ifdOffset) {
-	const size = getIfdSize(buffer, endianness, ifdOffset);
-	const offsets = [];
-
-	for (let i = 0; i < size * 12; i += 12) {
-		offsets.push(ifdOffset + 2 + i);
-	}
-
-	return offsets;
-}
-
-function getIfdEntry(buffer, endianness, ifdEntryOffset) {
-	return buffer.slice(ifdEntryOffset, ifdEntryOffset + 12);
-}
-
-// function getIfdEntries(buffer, endianness, ifdOffset) {
-// 	const ifdEntryOffsets = getIfdEntryOffsets(buffer, endianness, ifdOffset);
-
-// 	return ifdEntryOffsets.map(function(ifdEntryOffset) {
-// 		return getIfdEntry(buffer, endianness, ifdEntryOffset);
-// 	});
-// }
-
-function parseIfdEntry(buffer, endianness, ifdEntryOffset) {
-	const tag = pack(
-		endianness,
-		0,
-		0,
-		buffer[ifdEntryOffset],
-		buffer[ifdEntryOffset + 1]
-	);
-	const type = pack(
-		endianness,
-		0,
-		0,
-		buffer[ifdEntryOffset + 2],
-		buffer[ifdEntryOffset + 3]
-	);
-	const count = pack(
-		endianness,
-		buffer[ifdEntryOffset + 4],
-		buffer[ifdEntryOffset + 5],
-		buffer[ifdEntryOffset + 6],
-		buffer[ifdEntryOffset + 7]
-	);
-	const value = pack(
-		endianness,
-		buffer[ifdEntryOffset + 8],
-		buffer[ifdEntryOffset + 9],
-		buffer[ifdEntryOffset + 10],
-		buffer[ifdEntryOffset + 11]
-	);
-
-	return { offset: ifdEntryOffset, tag, type, count, value };
-}
-
-function parseIfdEntries(buffer, endianness, ifdOffset) {
-	const ifdEntryOffsets = getIfdEntryOffsets(buffer, endianness, ifdOffset);
-
-	return ifdEntryOffsets.map(function(ifdEntryOffset) {
-		return parseIfdEntry(buffer, endianness, ifdEntryOffset);
-	});
-}
+function getSubIfdOffsets(buffer, endianness, ifdOffset) {}
 
 module.exports = {
-	pack,
 	getFirstIfdOffset,
 	getIfdSize,
 	getNextIfdOffset,
 	getIfdOffsets,
 	getIfdEntryOffsets,
-	//getIfdEntries,
 	getIfdEntry,
-	parseIfdEntry,
-	parseIfdEntries,
 };

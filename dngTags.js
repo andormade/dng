@@ -6,7 +6,7 @@ const {
 	SHORT,
 	LONG,
 	UNDEFINED,
-} = require('./ifdEntryTypes');
+} = require('./types');
 
 /**
  * This tag encodes the DNG four-tier version number. For files compliant with

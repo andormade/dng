@@ -1,3 +1,4 @@
+const tiffTags = require('./tiffTags');
 const {
 	ImageWidth,
 	ImageLength,
@@ -12,7 +13,7 @@ const {
 	BitsPerSample,
 	ColorMap,
 	SamplesPerPixel,
-} = require('./tiffTags');
+} = tiffTags;
 
 /**
  * A bilevel image contains two colors—black and white.
@@ -96,9 +97,23 @@ const getRequiredTagsForRGBImages = function() {
 	};
 };
 
+/**
+ *
+ * @param {Number} number
+ * @returns {String}
+ */
+const getTiffTagNameByNumber = function(number) {
+	const [tag = number] = Object.keys(tiffTags).filter(function(tag) {
+		return tiffTags[tag].tag === number;
+	});
+
+	return tag;
+};
+
 module.exports = {
 	getRequiredTagsForGrayscaleImages,
 	getRequiredTagsForBilevelImages,
 	getRequiredTagsForPaletteColorImages,
 	getRequiredTagsForRGBImages,
+	getTiffTagNameByNumber,
 };
