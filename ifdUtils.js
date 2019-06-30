@@ -11,6 +11,7 @@ const {
 	readByteBuffer,
 	getTypeNameByNumber,
 } = require('./typeUtils');
+const { SubIFDs } = require('./tiffTags');
 
 function getType(buffer, endianness, ifdEntryOffset) {
 	return readShort(buffer, endianness, ifdEntryOffset + 2);
@@ -133,6 +134,23 @@ function getIfdEntryOffsets(buffer, endianness, ifdOffset) {
 	return offsets;
 }
 
+function getIfdEntryByTag(buffer, endianness, ifdOffset, tag) {
+	const ifdEntries = parseIfdEntries(buffer, endianness, ifdOffset);
+	return ifdEntries.filter(function(entry) {
+		return entry.tag === tag;
+	})[0];
+}
+
+function getSubIfds(buffer, endianness, ifdOffset) {
+	const { value } = getIfdEntryByTag(
+		buffer,
+		endianness,
+		ifdOffset,
+		SubIFDs.tag
+	);
+	return value;
+}
+
 module.exports = {
 	getIfdSize,
 	getNextIfdOffset,
@@ -142,4 +160,6 @@ module.exports = {
 	getHumanReadableIfdEntry,
 	getHumanReadableIfdEntries,
 	getIfdEntry,
+	getIfdEntryByTag,
+	getSubIfds,
 };

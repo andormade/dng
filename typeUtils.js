@@ -9,6 +9,20 @@ function pack(endianness, ...bytes) {
 	);
 }
 
+function unpack(endianness, number) {
+	const bytes = [];
+	while (number > 0) {
+		bytes.unshift(number & 0xff);
+		number >>= 8;
+	}
+
+	while (bytes.length < 4) {
+		bytes.unshift(0);
+	}
+
+	return bytes;
+}
+
 function readByte(buffer, endianness, offset) {
 	return pack(endianness, 0, 0, 0, buffer[offset]);
 }
@@ -91,4 +105,6 @@ module.exports = {
 	readLongBuffer,
 	readByteBuffer,
 	getTypeNameByNumber,
+	unpack,
+	pack,
 };

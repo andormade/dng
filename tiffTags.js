@@ -322,7 +322,7 @@ const StripOffsets = {
  */
 const Orientation = {
 	tag: 274,
-	type: [SHORT],
+	type: SHORT,
 	count: 1,
 	default: 1,
 };
